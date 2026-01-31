@@ -1,4 +1,0 @@
-Fichier source: video3.mp4
-Date de traitement: 2025-12-25 02:36:28
-Durée segments: 10s
-Index: video3.m3u8
