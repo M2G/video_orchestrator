@@ -6,21 +6,45 @@ DO UPDATE SET
     status = EXCLUDED.status,
            updated_at = now();
 
--- name: IncrementRetry :exec
-UPDATE video_jobs
-SET retry_count = retry_count + 1,
-    updated_at = now()
-WHERE filename = $1;
-
--- name: FindRunnableJobs :many
-SELECT filename, retry_count
-FROM video_jobs
-WHERE status = 'PENDING'
-  AND retry_count < 5;
-
--- name: LockJob :exec
+-- name: MarkProcessing :exec
 UPDATE video_jobs
 SET status = 'PROCESSING',
     updated_at = now()
-WHERE filename = $1
-  AND status = 'PENDING';
+WHERE id = $1;
+
+-- name: MarkRetry :exec
+UPDATE video_jobs
+SET retry_count = retry_count + 1,
+    next_retry_at = $1,
+    status = 'PENDING',
+    updated_at = now()
+WHERE id = $2;
+
+-- name: MarkFailed :exec
+UPDATE video_jobs
+SET status = 'FAILED',
+    updated_at = now()
+WHERE id = $1;
+
+-- name: MarkDone :exec
+UPDATE video_jobs
+SET status = 'DONE',
+    updated_at = now()
+WHERE id = $1;
+
+-- name: LockNextJobs :many
+SELECT id, filename, retry_count
+FROM video_jobs
+WHERE status = 'PENDING'
+  AND retry_count < $1
+  AND (next_retry_at IS NULL OR next_retry_at <= now())
+ORDER BY created_at
+    LIMIT $2
+FOR UPDATE SKIP LOCKED;
+
+-- name: CleanupStuckJobs :exec
+UPDATE video_jobs
+SET status = 'FAILED',
+    updated_at = now()
+WHERE status = 'PROCESSING'
+  AND updated_at < now() - interval '30 minutes';
