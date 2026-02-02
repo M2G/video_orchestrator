@@ -33,3 +33,4 @@ build/
 .vscode/
 
 redis-data
+*.mp4

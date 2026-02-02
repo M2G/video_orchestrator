@@ -5,11 +5,15 @@
 
 package com.example.postgresql;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.processing.Generated;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Generated("io.github.tandemdude.sqlc-gen-java")
 public class Queries {
@@ -20,28 +24,54 @@ public class Queries {
     }
 
 
-    private static final String findRunnableJobs = """
-        -- name: FindRunnableJobs :many
-        SELECT filename, retry_count
-        FROM video_jobs
-        WHERE status = 'PENDING'
-          AND retry_count < 5
+    private static final String cleanupStuckJobs = """
+        -- name: CleanupStuckJobs :exec
+        UPDATE video_jobs
+        SET status = 'FAILED',
+            updated_at = now()
+        WHERE status = 'PROCESSING'
+          AND updated_at < now() - interval '30 minutes'
         """;
 
-    public record FindRunnableJobsRow(
+    public void cleanupStuckJobs() throws SQLException {
+        var stmt = conn.prepareStatement(cleanupStuckJobs);
+
+        stmt.execute();
+    }
+
+    private static final String lockNextJobs = """
+        -- name: LockNextJobs :many
+        SELECT id, filename, retry_count
+        FROM video_jobs
+        WHERE status = 'PENDING'
+          AND retry_count < ?
+          AND (next_retry_at IS NULL OR next_retry_at <= now())
+        ORDER BY created_at
+            LIMIT ?
+        FOR UPDATE SKIP LOCKED
+        """;
+
+    public record LockNextJobsRow(
+        int id,
         @NonNull String filename,
         int retryCount
     ) {}
 
-    public List<FindRunnableJobsRow> findRunnableJobs() throws SQLException {
-        var stmt = conn.prepareStatement(findRunnableJobs);
+    public List<LockNextJobsRow> lockNextJobs(
+        int retryCount,
+        int limit
+    ) throws SQLException {
+        var stmt = conn.prepareStatement(lockNextJobs);
+        stmt.setInt(1, retryCount);
+        stmt.setInt(2, limit);
 
         var results = stmt.executeQuery();
-        var retList = new ArrayList<FindRunnableJobsRow>();
+        var retList = new ArrayList<LockNextJobsRow>();
         while (results.next()) {
-            var ret = new FindRunnableJobsRow(
-                results.getString(1),
-                results.getInt(2)
+            var ret = new LockNextJobsRow(
+                results.getInt(1),
+                results.getString(2),
+                results.getInt(3)
             );
             retList.add(ret);
         }
@@ -49,40 +79,76 @@ public class Queries {
         return retList;
     }
 
-    private static final String incrementRetry = """
-        -- name: IncrementRetry :exec
+    private static final String markDone = """
+        -- name: MarkDone :exec
         UPDATE video_jobs
-        SET retry_count = retry_count + 1,
+        SET status = 'DONE',
             updated_at = now()
-        WHERE filename = ?
+        WHERE id = ?
         """;
 
-    public void incrementRetry(
-        @NonNull String filename
+    public void markDone(
+        int id
     ) throws SQLException {
-        var stmt = conn.prepareStatement(incrementRetry);
-        stmt.setString(1, filename);
+        var stmt = conn.prepareStatement(markDone);
+        stmt.setInt(1, id);
 
         stmt.execute();
     }
 
-    private static final String lockJob = """
-        -- name: LockJob :exec
+    private static final String markFailed = """
+        -- name: MarkFailed :exec
+        UPDATE video_jobs
+        SET status = 'FAILED',
+            updated_at = now()
+        WHERE id = ?
+        """;
+
+    public void markFailed(
+        int id
+    ) throws SQLException {
+        var stmt = conn.prepareStatement(markFailed);
+        stmt.setInt(1, id);
+
+        stmt.execute();
+    }
+
+    private static final String markProcessing = """
+        -- name: MarkProcessing :exec
         UPDATE video_jobs
         SET status = 'PROCESSING',
             updated_at = now()
-        WHERE filename = ?
-          AND status = 'PENDING'
+        WHERE id = ?
         """;
 
-    public int lockJob(
-        @NonNull String filename
+    public void markProcessing(
+        int id
     ) throws SQLException {
-        var stmt = conn.prepareStatement(lockJob);
-        stmt.setString(1, filename);
+        var stmt = conn.prepareStatement(markProcessing);
+        stmt.setInt(1, id);
 
         stmt.execute();
-        return 0;
+    }
+
+    private static final String markRetry = """
+        -- name: MarkRetry :exec
+        UPDATE video_jobs
+        SET retry_count = retry_count + 1,
+            next_retry_at = ?,
+            status = 'PENDING',
+            updated_at = now()
+        WHERE id = ?
+        """;
+
+    public void markRetry(
+        @Nullable LocalDateTime nextRetryAt,
+        int id
+    ) throws SQLException {
+        var stmt = conn.prepareStatement(markRetry);
+        stmt.setObject(1, nextRetryAt);
+        stmt.setInt(2, id);
+
+        stmt.execute();
     }
 
     private static final String upsertVideoJob = """
