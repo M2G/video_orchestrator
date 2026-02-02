@@ -1,4 +1,0 @@
-Fichier source: video.mp4
-Date de traitement: 2026-02-01 04:41:30
-Durée segments: 10s
-Index: video.m3u8
