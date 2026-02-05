@@ -8,14 +8,18 @@ import java.sql.SQLException;
 @Component
 public class OrchestratorRunner {
 
-    private final OrchestratorService orchestratorService;
+    private final OrchestratorService orchestrator;
 
-    public OrchestratorRunner(OrchestratorService orchestratorService) {
-        this.orchestratorService = orchestratorService;
+    public OrchestratorRunner(OrchestratorService orchestrator) {
+        this.orchestrator = orchestrator;
     }
 
     @Scheduled(fixedDelay = 5000)
     public void run() throws SQLException {
-        orchestratorService.runOnce();
+        orchestrator.runOnce();
     }
 }
+
+
+
+

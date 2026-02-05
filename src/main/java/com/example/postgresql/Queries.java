@@ -5,15 +5,11 @@
 
 package com.example.postgresql;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.processing.Generated;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 @Generated("io.github.tandemdude.sqlc-gen-java")
 public class Queries {
@@ -141,12 +137,27 @@ public class Queries {
         """;
 
     public void markRetry(
-        @Nullable LocalDateTime nextRetryAt,
-        int id
+            int nextRetryAt,
+            int id
     ) throws SQLException {
         var stmt = conn.prepareStatement(markRetry);
         stmt.setObject(1, nextRetryAt);
         stmt.setInt(2, id);
+
+        stmt.execute();
+    }
+
+    private static final String resetStuckJobs = """
+        -- name: ResetStuckJobs :exec
+        UPDATE video_jobs
+        SET status = 'PENDING',
+            updated_at = now()
+        WHERE status = 'PROCESSING'
+          AND updated_at < now() - interval '15 minutes'
+        """;
+
+    public void resetStuckJobs() throws SQLException {
+        var stmt = conn.prepareStatement(resetStuckJobs);
 
         stmt.execute();
     }

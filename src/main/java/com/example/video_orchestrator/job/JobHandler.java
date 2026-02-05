@@ -1,15 +1,8 @@
 package com.example.video_orchestrator.job;
 
-import org.springframework.stereotype.Component;
+import com.example.video_orchestrator.model.JobResult;
+import com.example.video_orchestrator.model.VideoJob;
 
-@Component
-public class JobHandler {
-
-    public void process(String filename) {
-        System.out.println("Processing file: " + filename);
-
-        if (filename.contains("fail")) {
-            throw new RuntimeException("Simulated failure");
-        }
-    }
+public interface JobHandler {
+    JobResult handle(VideoJob job) throws Exception;
 }

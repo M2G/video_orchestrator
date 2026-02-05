@@ -9,8 +9,10 @@ import java.util.concurrent.Executors;
 @Configuration
 public class ExecutorConfig {
 
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     public ExecutorService executorService() {
-        return Executors.newFixedThreadPool(4);
+        return Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors()
+        );
     }
 }

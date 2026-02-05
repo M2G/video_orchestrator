@@ -1,4 +1,4 @@
-package com.example.video_orchestrator.job;
+package com.example.video_orchestrator.model;
 
 import com.example.postgresql.Queries.LockNextJobsRow;
 
