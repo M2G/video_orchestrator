@@ -1,6 +1,5 @@
 package com.example.video_orchestrator.services;
 
-import com.example.video_orchestrator.model.JobResult;
 import com.example.video_orchestrator.retry.RetryPolicy;
 import com.example.video_orchestrator.job.JobHandler;
 import com.example.video_orchestrator.model.VideoJob;
