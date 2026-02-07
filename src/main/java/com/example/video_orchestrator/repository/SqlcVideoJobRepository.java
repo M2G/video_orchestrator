@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 @Repository
-public class SqlcVideoJobRepository {
+public class SqlcVideoJobRepository implements VideoJobRepository {
 
     private final Queries queries;
 
@@ -16,26 +16,55 @@ public class SqlcVideoJobRepository {
         this.queries = queries;
     }
 
-    public List<VideoJob> lockNextJobs(int limit, int maxRetry) throws SQLException {
-        return queries.lockNextJobs(limit, maxRetry)
-                .stream()
-                .map(r -> new VideoJob(r.id(), r.filename(), r.retryCount()))
-                .toList();
+    public List<VideoJob> lockNextJobs(int limit, int maxRetry) {
+        try {
+            return queries.lockNextJobs(limit, maxRetry)
+                    .stream()
+                    .map(this::toVideoJob)
+                    .toList();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void markProcessing(int id) throws SQLException {
-        queries.markProcessing(id);
+    public void markProcessing(long id) {
+        try {
+            queries.markProcessing((int) id);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void markRetry(int delaySeconds, int id) throws SQLException {
-        queries.markRetry(delaySeconds, id);
+    public void markDone(long id) {
+        try {
+            queries.markDone((int) id);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void markFailed(int id) throws SQLException {
-        queries.markFailed(id);
+    public void markRetry(long id, int delaySeconds) {
+        try {
+            queries.markRetry(delaySeconds, (int) id);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void markDone(int id) throws SQLException {
-        queries.markDone(id);
+    public void markFailed(long id) {
+        try {
+            queries.markFailed((int) id);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private VideoJob toVideoJob(Queries.LockNextJobsRow row) {
+        return new VideoJob(
+                row.id(),
+                row.filename(),
+                row.retryCount()
+        );
     }
 }
+

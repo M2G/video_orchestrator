@@ -12,14 +12,6 @@ SET status = 'PROCESSING',
     updated_at = now()
 WHERE id = $1;
 
--- name: MarkRetry :exec
-UPDATE video_jobs
-SET retry_count = retry_count + 1,
-    next_retry_at = now() + ($1 * interval '1 second'),
-    status = 'PENDING',
-    updated_at = now()
-WHERE id = $2;
-
 -- name: MarkFailed :exec
 UPDATE video_jobs
 SET status = 'FAILED',
@@ -54,4 +46,12 @@ UPDATE video_jobs
 SET status = 'PENDING',
     updated_at = now()
 WHERE status = 'PROCESSING'
-  AND updated_at < now() - interval '15 minutes';
+  AND updated_at < now() - interval '10 minutes';
+
+-- name: MarkRetry :exec
+UPDATE video_jobs
+SET retry_count = retry_count + 1,
+    next_retry_at = now() + ($1::int * interval '1 second'),
+    status = 'PENDING',
+    updated_at = now()
+WHERE id = $2;

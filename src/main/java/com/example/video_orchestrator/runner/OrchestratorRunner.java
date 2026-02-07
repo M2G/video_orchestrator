@@ -1,9 +1,8 @@
-package com.example.video_orchestrator.orchestrator;
+package com.example.video_orchestrator.runner;
 
+import com.example.video_orchestrator.services.OrchestratorService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.sql.SQLException;
 
 @Component
 public class OrchestratorRunner {
@@ -14,9 +13,9 @@ public class OrchestratorRunner {
         this.orchestrator = orchestrator;
     }
 
-    @Scheduled(fixedDelay = 5000)
-    public void run() throws SQLException {
-        orchestrator.runOnce();
+    @Scheduled(fixedDelay = 1000)
+    public void tick() {
+        orchestrator.runOnce(10);
     }
 }
 

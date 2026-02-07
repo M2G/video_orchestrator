@@ -5,11 +5,14 @@
 
 package com.example.postgresql;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.processing.Generated;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Generated("io.github.tandemdude.sqlc-gen-java")
 public class Queries {
@@ -130,18 +133,18 @@ public class Queries {
         -- name: MarkRetry :exec
         UPDATE video_jobs
         SET retry_count = retry_count + 1,
-            next_retry_at = ?,
+            next_retry_at = now() + (?::int * interval '1 second'),
             status = 'PENDING',
             updated_at = now()
         WHERE id = ?
         """;
 
     public void markRetry(
-            int nextRetryAt,
-            int id
+        int column1,
+        int id
     ) throws SQLException {
         var stmt = conn.prepareStatement(markRetry);
-        stmt.setObject(1, nextRetryAt);
+        stmt.setInt(1, column1);
         stmt.setInt(2, id);
 
         stmt.execute();
@@ -153,7 +156,7 @@ public class Queries {
         SET status = 'PENDING',
             updated_at = now()
         WHERE status = 'PROCESSING'
-          AND updated_at < now() - interval '15 minutes'
+          AND updated_at < now() - interval '10 minutes'
         """;
 
     public void resetStuckJobs() throws SQLException {
