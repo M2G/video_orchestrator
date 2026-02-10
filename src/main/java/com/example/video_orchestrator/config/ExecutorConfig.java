@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 @Configuration
 public class ExecutorConfig {
 
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     public ExecutorService executorService() {
         int cores = Runtime.getRuntime().availableProcessors();
 
@@ -22,3 +22,4 @@ public class ExecutorConfig {
         );
     }
 }
+
