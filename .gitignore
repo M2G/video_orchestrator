@@ -34,3 +34,5 @@ build/
 
 redis-data
 *.mp4
+*.log
+*.tmp
