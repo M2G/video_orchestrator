@@ -5,11 +5,14 @@
 
 package com.example.postgresql;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.processing.Generated;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Generated("io.github.tandemdude.sqlc-gen-java")
 public class Queries {
@@ -68,42 +71,6 @@ public class Queries {
         var retList = new ArrayList<LockAndMarkProcessingRow>();
         while (results.next()) {
             var ret = new LockAndMarkProcessingRow(
-                results.getInt(1),
-                results.getString(2),
-                results.getInt(3)
-            );
-            retList.add(ret);
-        }
-
-        return retList;
-    }
-
-    private static final String lockNextJobs = """
-        -- name: LockNextJobs :many
-        SELECT id, filename, retry_count
-        FROM video_jobs
-        WHERE status = 'PENDING'
-        ORDER BY created_at
-            LIMIT ?
-        FOR UPDATE SKIP LOCKED
-        """;
-
-    public record LockNextJobsRow(
-        int id,
-        @NonNull String filename,
-        int retryCount
-    ) {}
-
-    public List<LockNextJobsRow> lockNextJobs(
-        int limit,
-        int maxRetry) throws SQLException {
-        var stmt = conn.prepareStatement(lockNextJobs);
-        stmt.setInt(1, limit);
-
-        var results = stmt.executeQuery();
-        var retList = new ArrayList<LockNextJobsRow>();
-        while (results.next()) {
-            var ret = new LockNextJobsRow(
                 results.getInt(1),
                 results.getString(2),
                 results.getInt(3)
