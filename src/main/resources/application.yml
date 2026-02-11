@@ -27,3 +27,6 @@ video:
 
   segment-duration: 10
   max-segments: 0
+
+instance:
+  id: ${HOSTNAME:local}

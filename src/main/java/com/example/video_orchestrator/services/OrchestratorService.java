@@ -4,6 +4,8 @@ import com.example.video_orchestrator.retry.RetryPolicy;
 import com.example.video_orchestrator.job.JobHandler;
 import com.example.video_orchestrator.model.VideoJob;
 import com.example.video_orchestrator.repository.VideoJobRepository;
+import jakarta.annotation.PreDestroy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +26,9 @@ public class OrchestratorService {
     private final RetryPolicy retryPolicy;
     private final ExecutorService executor;
 
+    @Value("${instance.id}")
+    private String instanceId;
+
     // valeurs simples et explicites
     private static final int MAX_RETRY = 5;
     private static final int MAX_BATCH = 10;
@@ -40,13 +45,20 @@ public class OrchestratorService {
         this.executor = executor;
     }
 
-    /**
-     * Un cycle d'orchestration
-     * - backpressure réel
-     * - sqlc compatible
-     * - parallélisme maîtrisé
-     */
+    private volatile boolean shuttingDown = false;
+
+    @PreDestroy
+    public void onShutdown() {
+        shuttingDown = true;
+        log.info("Graceful shutdown started");
+    }
+
     public void runOnce() {
+        if (shuttingDown) {
+            log.info("Shutdown in progress, skip orchestration");
+            return;
+        }
+
         ThreadPoolExecutor pool = (ThreadPoolExecutor) executor;
 
         int freeSlots =
@@ -105,11 +117,10 @@ public class OrchestratorService {
 
         repository.markRetry(job.id(), delaySeconds);
 
-        log.warn(
-                "Job {} retry {} in {}s",
+        log.warn("[{}] Job {} retry {} in {}s",
+                instanceId,
                 job.id(),
-                nextRetry,
-                delaySeconds
-        );
+                job.retryCount() + 1,
+                delaySeconds);
     }
 }
