@@ -14,6 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 @Service
 public class OrchestratorService {
@@ -85,20 +86,38 @@ public class OrchestratorService {
                 );
 
         log.info(
-                "Orchestration tick: batch={}, active={}, queued={}",
-                jobs.size(),
+                "event=orchestrator_tick instance={} active={} queued={}",
+                instanceId,
                 pool.getActiveCount(),
                 pool.getQueue().size()
         );
     }
 
     private void handleJob(VideoJob job) {
+
+        MDC.put("instance", instanceId);
+        MDC.put("jobId", String.valueOf(job.id()));
+
         try {
+            long start = System.currentTimeMillis();
+
             jobHandler.handle(job);
+
             repository.markDone(job.id());
+
+            long duration = System.currentTimeMillis() - start;
+
+            log.info(
+                    "event=job_completed instance={} jobId={} durationMs={}",
+                    instanceId,
+                    job.id(),
+                    duration
+            );
 
         } catch (Exception e) {
             handleFailure(job, e);
+        } finally {
+            MDC.clear();
         }
     }
 
@@ -107,8 +126,12 @@ public class OrchestratorService {
 
         if (nextRetry >= MAX_RETRY) {
             repository.markFailed(job.id());
-            log.warn("Job {} FAILED after {} retries",
-                    job.id(), nextRetry);
+            log.error(
+                    "event=job_failed instance={} jobId={} retry={}",
+                    instanceId,
+                    job.id(),
+                    nextRetry
+            );
             return;
         }
 
@@ -117,10 +140,11 @@ public class OrchestratorService {
 
         repository.markRetry(job.id(), delaySeconds);
 
-        log.warn("[{}] Job {} retry {} in {}s",
+        log.error(
+                "event=job_failed instance={} jobId={} retry={}",
                 instanceId,
                 job.id(),
-                job.retryCount() + 1,
-                delaySeconds);
+                nextRetry
+        );
     }
 }
