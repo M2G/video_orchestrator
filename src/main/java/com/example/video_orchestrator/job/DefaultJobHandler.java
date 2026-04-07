@@ -6,8 +6,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class DefaultJobHandler implements JobHandler {
 
+
+    // Implémentation simple (ex: simulation)
     @Override
     public void handle(VideoJob job) throws Exception {
-        // traitement réel
+
+        // TODO: remplacer par ffmpeg / traitement réel
+        Thread.sleep(500);
     }
 }

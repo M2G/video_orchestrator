@@ -18,20 +18,23 @@ import org.slf4j.MDC;
 
 @Service
 public class OrchestratorService {
-
+    // Logger monitoring
     private static final Logger log =
             LoggerFactory.getLogger(OrchestratorService.class);
-
+    // Access DB (sqlc)
     private final VideoJobRepository repository;
+    // Traitement métier du job
     private final JobHandler jobHandler;
+    // Stratégie de retry
     private final RetryPolicy retryPolicy;
+    // Pool de threads (parallélisme)
     private final ExecutorService executor;
-
+    // ID de l’instance (multi-node)
     @Value("${instance.id}")
     private String instanceId;
-
-    // valeurs simples et explicites
+    // ID de l’instance (multi-node)
     private static final int MAX_RETRY = 5;
+    // Taille max d’un batch
     private static final int MAX_BATCH = 10;
 
     public OrchestratorService(
@@ -54,6 +57,7 @@ public class OrchestratorService {
         log.info("Graceful shutdown started");
     }
 
+    // lance un cycle d’orchestration
     public void runOnce() {
         if (shuttingDown) {
             log.info("Shutdown in progress, skip orchestration");
@@ -61,17 +65,18 @@ public class OrchestratorService {
         }
 
         ThreadPoolExecutor pool = (ThreadPoolExecutor) executor;
-
+        // Nombre de slots disponibles
         int freeSlots =
                 pool.getMaximumPoolSize()
                         - pool.getActiveCount()
                         - pool.getQueue().size();
 
+        // Backpressure : rien à faire si saturé
         if (freeSlots <= 0) {
             log.debug("Backpressure: no free executor slots");
             return;
         }
-
+        // Backpressure : rien à faire si saturé
         int batchSize = Math.min(freeSlots, MAX_BATCH);
 
         // SQL: lock + mark PROCESSING (sqlc safe)
@@ -92,7 +97,7 @@ public class OrchestratorService {
                 pool.getQueue().size()
         );
     }
-
+    // Traite un job
     private void handleJob(VideoJob job) {
 
         MDC.put("instance", instanceId);
@@ -100,7 +105,7 @@ public class OrchestratorService {
 
         try {
             long start = System.currentTimeMillis();
-
+            // Traitement métier
             jobHandler.handle(job);
 
             repository.markDone(job.id());
@@ -120,10 +125,11 @@ public class OrchestratorService {
             MDC.clear();
         }
     }
-
+    // Gère un échec
     private void handleFailure(VideoJob job, Exception error) {
         int nextRetry = job.retryCount() + 1;
 
+        // Trop de retries -> FAILED
         if (nextRetry >= MAX_RETRY) {
             repository.markFailed(job.id());
             log.error(
@@ -132,12 +138,15 @@ public class OrchestratorService {
                     job.id(),
                     nextRetry
             );
+            log.error("e: ", error); // @TODO refactor
             return;
         }
 
+        // Calcul du délai de retry
         int delaySeconds =
                 retryPolicy.nextDelaySeconds(job.retryCount());
 
+        // Calcul du délai de retry
         repository.markRetry(job.id(), delaySeconds);
 
         log.error(

@@ -6,13 +6,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class OrchestratorRunner {
-
+    // Service principal
     private final OrchestratorService orchestrator;
 
     public OrchestratorRunner(OrchestratorService orchestrator) {
         this.orchestrator = orchestrator;
     }
-
+    // Scheduler principal
     @Scheduled(fixedDelay = 1000)
     public void tick() {
         orchestrator.runOnce();

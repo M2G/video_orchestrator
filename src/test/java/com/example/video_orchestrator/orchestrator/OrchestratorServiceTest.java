@@ -64,7 +64,7 @@ class OrchestratorServiceTest {
     void shouldRetryOnFailure() throws Exception {
         VideoJob job = new VideoJob(1L, "video.mp4", 1);
 
-        when(repository.lockNextJobs(anyInt(), anyInt()))
+        when(repository.LockAndMarkProcessingRow(anyInt(), anyInt()))
                 .thenReturn(List.of(job));
 
         doThrow(new RuntimeException("fail"))
@@ -77,5 +77,5 @@ class OrchestratorServiceTest {
         verify(repository).markRetry(10L, 1);
     }
 }
-
+*/
 

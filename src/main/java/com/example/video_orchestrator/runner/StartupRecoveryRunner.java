@@ -9,10 +9,12 @@ public class StartupRecoveryRunner implements CommandLineRunner {
 
     private final SqlcVideoJobRepository repository;
 
+    // Repository DB
     public StartupRecoveryRunner(SqlcVideoJobRepository repository) {
         this.repository = repository;
     }
 
+    // Nettoie les jobs bloqués au démarrage
     @Override
     public void run(String... args) {
         repository.resetStuckJobs();

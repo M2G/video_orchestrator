@@ -6,22 +6,22 @@
 #############################################
 
 # Configuration
-WATCH_DIR="$HOME/Works/video_orchestrator/src/main/resources/tmp/videos"
-OUTPUT_DIR="$HOME/Works/video_orchestrator/src/main/resources/var/www/html/streams"
-PROCESSING_DIR="$HOME/Works/video_orchestrator/src/main/resources/tmp/videos/processing"
-DONE_DIR="$HOME/Works/video_orchestrator/src/main/resources/tmp/videos/done"
-ERROR_DIR="$HOME/Works/video_orchestrator/src/main/resources/tmp/videos/error"
-LOG_FILE="$HOME/Works/video_orchestrator/src/main/resources/var/log/video_processor.log"
-LOCK_FILE="$HOME/Works/video_orchestrator/src/main/resources/var/run/video_processor.lock"
+#WATCH_DIR="$HOME/Works/video_orchestrator/src/main/resources/tmp/videos"
+#OUTPUT_DIR="$HOME/Works/video_orchestrator/src/main/resources/var/www/html/streams"
+#PROCESSING_DIR="$HOME/Works/video_orchestrator/src/main/resources/tmp/videos/processing"
+#DONE_DIR="$HOME/Works/video_orchestrator/src/main/resources/tmp/videos/done"
+#ERROR_DIR="$HOME/Works/video_orchestrator/src/main/resources/tmp/videos/error"
+#LOG_FILE="$HOME/Works/video_orchestrator/src/main/resources/var/log/video_processor.log"
+#LOCK_FILE="$HOME/Works/video_orchestrator/src/main/resources/var/run/video_processor.lock"
 
 
-#WATCH_DIR="./tmp/videos"
-#OUTPUT_DIR="./var/www/html/streams"
-#PROCESSING_DIR="./tmp/videos/processing"
-#DONE_DIR="./tmp/videos/done"
-#ERROR_DIR="./tmp/videos/error"
-#LOG_FILE="./var/log/video_processor.log"
-#LOCK_FILE="./var/run/video_processor.lock"
+WATCH_DIR="./tmp/videos"
+OUTPUT_DIR="./var/www/html/streams"
+PROCESSING_DIR="./tmp/videos/processing"
+DONE_DIR="./tmp/videos/done"
+ERROR_DIR="./tmp/videos/error"
+LOG_FILE="./var/log/video_processor.log"
+LOCK_FILE="./var/run/video_processor.lock"
 
 # Paramètres de segmentation
 SEGMENT_DURATION=10
@@ -29,8 +29,8 @@ MAX_SEGMENTS=0
 EXTENSION=".ts"
 
 # Chemin vers le binaire
-#SEGMENTER="./usr/local/bin/video_segmenter"
-SEGMENTER="$HOME/Works/video_orchestrator/src/main/resources/usr/local/bin/video_segmenter"
+SEGMENTER="./usr/local/bin/video_segmenter"
+#SEGMENTER="$HOME/Works/video_orchestrator/src/main/resources/usr/local/bin/video_segmenter"
 
 #############################################
 # Fonctions utilitaires

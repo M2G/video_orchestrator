@@ -36,3 +36,6 @@ redis-data
 *.mp4
 *.log
 *.tmp
+
+./src/main/resources/var/**/**/*
+./src/main/resources/log/**/**/*

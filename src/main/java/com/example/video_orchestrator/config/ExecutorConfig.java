@@ -8,12 +8,14 @@ import java.util.concurrent.*;
 @Configuration
 public class ExecutorConfig {
 
+     // Thread pool pour le parallélisme
     @Bean(destroyMethod = "shutdown")
     public ExecutorService executorService() {
+
         int cores = Runtime.getRuntime().availableProcessors();
 
         return new ThreadPoolExecutor(
-                cores * 2,
+                cores * 2, // IO-bound
                 cores * 4,
                 60,
                 TimeUnit.SECONDS,
